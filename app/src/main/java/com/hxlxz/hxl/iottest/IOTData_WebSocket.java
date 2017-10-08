@@ -53,7 +53,7 @@ class IOTData_WebSocket {
         @Override
         protected String doInBackground(Void... params) {
             try {
-                GetThingShadowRequest getThingShadowRequest = new GetThingShadowRequest().withThingName("Phone");
+                GetThingShadowRequest getThingShadowRequest = new GetThingShadowRequest().withThingName("phone");
                 GetThingShadowResult getThingShadowResult = iotDataClient.getThingShadow(getThingShadowRequest);
                 byte[] bytes = new byte[getThingShadowResult.getPayload().remaining()];
                 getThingShadowResult.getPayload().get(bytes);
@@ -89,7 +89,7 @@ class IOTData_WebSocket {
         protected String doInBackground(Void... params) {
             try {
                 UpdateThingShadowRequest updateThingShadowRequest = new UpdateThingShadowRequest();
-                updateThingShadowRequest.setThingName("Phone");
+                updateThingShadowRequest.setThingName("phone");
 
                 ByteBuffer payloadBuffer = ByteBuffer.wrap(state.getBytes());
                 updateThingShadowRequest.setPayload(payloadBuffer);
