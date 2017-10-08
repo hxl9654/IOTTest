@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:orientation="vertical"
+    tools:layout_editor_absoluteX="8dp"
+    tools:layout_editor_absoluteY="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextClock
+            android:id="@+id/textClock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:format24Hour="yyyy/dd/MM-H:mm:ss"
+            android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/Light"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Light"
+            android:textAlignment="center"
+            android:textColor="@android:color/black" />
+
+        <TextView
+            android:id="@+id/Distance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Distance"
+            android:textAlignment="center"
+            android:textColor="@android:color/black" />
+
+        <Button
+            android:id="@+id/LightButtom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onClickListener"
+            android:text="Light" />
+
+        <Button
+            android:id="@+id/BeepButtom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onClickListener"
+            android:text="Beep" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"></LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:layout_height="wrap_content">
+
+    </LinearLayout>
+</LinearLayout>
