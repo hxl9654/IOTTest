@@ -16,11 +16,10 @@ import java.util.UUID;
 class IOT_MQTT {
     private KeyStore clientKetStore;
     private AWSIotMqttManager mqttManager;
-    private String clientid;
     private AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus status;
 
     IOT_MQTT(Context context) {
-        clientid = UUID.randomUUID().toString();
+        String clientid = UUID.randomUUID().toString();
         mqttManager = new AWSIotMqttManager(clientid, "a3bwasu2cbypll.iot.ap-northeast-1.amazonaws.com");
         mqttManager.setKeepAlive(1000);
 

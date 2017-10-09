@@ -15,11 +15,15 @@ import java.util.UUID;
 
 
 class IOT_WebSockets {
-    private AWSSessionCredentials awsCredentails;
     private AWSIotMqttManager mqttManager;
-    private String clientid;
     private AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus status;
     CognitoCachingCredentialsProvider credentialsProvider;
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        mqttManager.disconnect();
+    }
 
     IOT_WebSockets(Context context) {
         credentialsProvider = new CognitoCachingCredentialsProvider(
@@ -27,13 +31,13 @@ class IOT_WebSockets {
                 "ap-northeast-1:de02d42c-7126-4d85-a7f8-611546099b6a", // 身份池 ID
                 Regions.AP_NORTHEAST_1 // 区域
         );
-        clientid = UUID.randomUUID().toString();
+        String clientid = UUID.randomUUID().toString();
         mqttManager = new AWSIotMqttManager(clientid, "a3bwasu2cbypll.iot.ap-northeast-1.amazonaws.com");
         mqttManager.setKeepAlive(1000);
         new Thread(new Runnable() {
             @Override
             public void run() {
-                awsCredentails = credentialsProvider.getCredentials();
+                credentialsProvider.getCredentials();
             }
         }).start();
     }

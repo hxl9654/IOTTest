@@ -12,7 +12,6 @@ import com.amazonaws.services.iotdata.model.GetThingShadowRequest;
 import com.amazonaws.services.iotdata.model.GetThingShadowResult;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowRequest;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowResult;
-
 import java.nio.ByteBuffer;
 
 
@@ -20,13 +19,18 @@ class IOTData_WebSocket {
     AWSIotDataClient iotDataClient;
     CognitoCachingCredentialsProvider credentialsProvider;
 
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        iotDataClient.shutdown();
+    }
+
     IOTData_WebSocket(Context context) {
         credentialsProvider = new CognitoCachingCredentialsProvider(
                 context,
                 "ap-northeast-1:de02d42c-7126-4d85-a7f8-611546099b6a", // 身份池 ID
                 Regions.AP_NORTHEAST_1 // 区域
         );
-
         iotDataClient = new AWSIotDataClient(credentialsProvider);
         iotDataClient.setEndpoint("a3bwasu2cbypll.iot.ap-northeast-1.amazonaws.com");
     }
@@ -53,7 +57,7 @@ class IOTData_WebSocket {
         @Override
         protected String doInBackground(Void... params) {
             try {
-                GetThingShadowRequest getThingShadowRequest = new GetThingShadowRequest().withThingName("phone");
+                GetThingShadowRequest getThingShadowRequest = new GetThingShadowRequest().withThingName("phoneMQTT");
                 GetThingShadowResult getThingShadowResult = iotDataClient.getThingShadow(getThingShadowRequest);
                 byte[] bytes = new byte[getThingShadowResult.getPayload().remaining()];
                 getThingShadowResult.getPayload().get(bytes);
@@ -89,7 +93,7 @@ class IOTData_WebSocket {
         protected String doInBackground(Void... params) {
             try {
                 UpdateThingShadowRequest updateThingShadowRequest = new UpdateThingShadowRequest();
-                updateThingShadowRequest.setThingName("phone");
+                updateThingShadowRequest.setThingName("phoneMQTT");
 
                 ByteBuffer payloadBuffer = ByteBuffer.wrap(state.getBytes());
                 updateThingShadowRequest.setPayload(payloadBuffer);

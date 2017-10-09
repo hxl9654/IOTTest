@@ -1,5 +1,7 @@
 package com.hxlxz.hxl.iottest;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -7,13 +9,23 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.util.StringBuilderPrinter;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -32,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         final boolean[] ed = {false, false};
         SensorsInit();
         WebSocketClient = new IOT_WebSockets(getApplicationContext());
@@ -105,6 +118,9 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
+
+        IOTData_MQTT MQTTShadowClient = new IOTData_MQTT(getApplicationContext());
+        MQTTShadowClient.phoneMQTT.setLight(2333);
     }
 
     private void SensorsInit() {
