@@ -22,20 +22,22 @@ class IOTData_MQTT {
         try {
             KeyStore keyStore = KeyStore.getInstance("BKS");
             keyStore.load(context.openFileInput("CertPhone"), "CertPhonePassword".toCharArray());
+            Log.d("IOTDataMQTT", "using keystore CertPhone.");
             awsIotMqttClient = new AWSIotMqttClient("a3bwasu2cbypll.iot.ap-northeast-1.amazonaws.com", clientid, keyStore, "CertPhonePassword");
-
+            Log.d("IOTDataMQTT", "AWSIotMqttClient inited");
         } catch (Exception e) {
             Log.e("IOTDataMQTT", "An error occurred retrieving cert/key from keystore.", e);
         }
         phoneMQTT = new PhoneMQTT("phoneMQTT");
         try {
             awsIotMqttClient.attach(phoneMQTT);
+            Log.d("IOTDataMQTT", "AWSIotMqttClient attached");
             awsIotMqttClient.connect();
+            Log.d("IOTDataMQTT", "AWSIotMqttClient connected");
         } catch (AWSIotException e) {
             Log.e("IOTDataMQTT", "attach thing error", e);
         }
-        phoneMQTT.setLight(233);
-        phoneMQTT.setBeep(true);
+        Log.d("IOTDataMQTT", "MQTTShadowClient created.");
     }
 
     @Override

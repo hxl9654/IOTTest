@@ -39,9 +39,12 @@ public class MainActivity extends AppCompatActivity {
     private TimerTask sensorTimerTask;
     IOT_MQTT MQTTClient;
     IOT_WebSockets WebSocketClient;
+    IOTData_WebSocket WebSocketShadowClient;
+    IOTData_MQTT MQTTShadowClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("IOT", "MainActivity.onCreate-start");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -95,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        IOTData_WebSocket WebSocketShadowClient = new IOTData_WebSocket(getApplicationContext());
+        WebSocketShadowClient = new IOTData_WebSocket(getApplicationContext());
         WebSocketShadowClient.UpdateShadow_Start("light", Double.toString(lightSenserValue), new UpdateShadowCallback() {
             @Override
             public void call(final String key, final String value, final String result) {
@@ -119,8 +122,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        IOTData_MQTT MQTTShadowClient = new IOTData_MQTT(getApplicationContext());
+        MQTTShadowClient = new IOTData_MQTT(getApplicationContext());
+
         MQTTShadowClient.phoneMQTT.setLight(2333);
+        Log.d("IOT", "MainActivity.onCreate-end");
     }
 
     private void SensorsInit() {
