@@ -52,15 +52,87 @@
 
     </LinearLayout>
 
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="20dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/MQTTStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MQTT:Disconnected"
+            android:textAlignment="center"
+            android:textColor="@android:color/black" />
+
+        <TextView
+            android:id="@+id/BeepStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Beep:False"
+            android:textAlignment="center"
+            android:textColor="@android:color/black" />
+
+        <Button
+            android:id="@+id/MQTTConnect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onClickListener"
+            android:text="MQTT Connect" />
+
+        <EditText
+            android:id="@+id/MQTTMsg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:enabled="false"
+            android:inputType="textMultiLine" />
+
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="20dp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"></LinearLayout>
+        android:orientation="vertical">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:orientation="vertical"
-        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/WebSocketStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="WebSocket:Disconnected"
+            android:textAlignment="center"
+            android:textColor="@android:color/black" />
 
+        <TextView
+            android:id="@+id/FlashLightStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FlashLight:False"
+            android:textAlignment="center"
+            android:textColor="@android:color/black" />
+
+        <Button
+            android:id="@+id/WebSocketConnect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onClickListener"
+            android:text="WebSocket Connect" />
+
+        <EditText
+            android:id="@+id/WebSocketMsg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:enabled="false"
+            android:inputType="textMultiLine" />
     </LinearLayout>
+
 </LinearLayout>
