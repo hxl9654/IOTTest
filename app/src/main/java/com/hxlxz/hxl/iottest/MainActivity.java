@@ -1,7 +1,5 @@
 package com.hxlxz.hxl.iottest;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -9,25 +7,22 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.StringBuilderPrinter;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import com.google.gson.Gson;
+
+import com.hxlxz.hxl.iottest.IOT_MQTT.IotMqttClientStatus;
 
 public class MainActivity extends AppCompatActivity {
     double lightSenserValue, distanceSenserValue;
@@ -48,83 +43,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final boolean[] ed = {false, false};
         SensorsInit();
         WebSocketClient = new IOT_WebSockets(getApplicationContext());
         MQTTClient = new IOT_MQTT(getApplicationContext());
-        MQTTClient.Connect(new ConnectCallBack() {
-            @Override
-            public void call(AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus status) {
-                if (status == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected) {
-                    if (ed[0] == true)
-                        return;
-                    ed[0] = true;
-                    MQTTClient.SubScribe("TEST", new SubScribeCallback() {
-                        @Override
-                        public void call(String Topic, final String Message, byte[] bytes) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(getApplicationContext(), Message, Toast.LENGTH_LONG).show();
-                                }
-                            });
-                        }
-                    });
-                    MQTTClient.Publish("TEST", "Test Message form Android MQTT Client");
-                }
-            }
-        });
 
-        WebSocketClient.Connect(new ConnectCallBack() {
-            @Override
-            public void call(AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus status) {
-                if (status == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected) {
-                    if (ed[1] == true)
-                        return;
-                    ed[1] = true;
-                    WebSocketClient.SubScribe("TEST", new SubScribeCallback() {
-                        @Override
-                        public void call(String Topic, final String Message, byte[] bytes) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(getApplicationContext(), Message, Toast.LENGTH_LONG).show();
-                                }
-                            });
-                        }
-                    });
-                    WebSocketClient.Publish("TEST", "Test Message form Android WebSocket Client");
-                }
-            }
-        });
-
-        WebSocketShadowClient = new IOTData_WebSocket(getApplicationContext());
-        WebSocketShadowClient.UpdateShadow_Start("light", Double.toString(lightSenserValue), new UpdateShadowCallback() {
-            @Override
-            public void call(final String key, final String value, final String result) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "Set " + key + ":" + value + "  " + result, Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-        });
-        WebSocketShadowClient.GetShadow_Start("light", new GetShadowCallback() {
-            @Override
-            public void call(final String key, final String value) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "Got " + key + ":" + value, Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-        });
-
-        MQTTShadowClient = new IOTData_MQTT(getApplicationContext());
-
-        MQTTShadowClient.phoneMQTT.setLight(2333);
         Log.d("IOT", "MainActivity.onCreate-end");
     }
 
@@ -133,30 +55,88 @@ public class MainActivity extends AppCompatActivity {
         Light = (TextView) findViewById(R.id.Light);
         Distance = (TextView) findViewById(R.id.Distance);
 
-        Light.setText("FlashLight:" + sensors.lightSensor.GetValue());
+        Light.setText("Light:" + sensors.lightSensor.GetValue());
         Distance.setText("Distance:" + sensors.distanceSensor.GetValue());
-
-        final Handler handler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                lightSenserValue = sensors.lightSensor.GetValue();
-                distanceSenserValue = sensors.distanceSensor.GetValue();
-                Light.setText("FlashLight:" + lightSenserValue);
-                Distance.setText("Distance:" + distanceSenserValue);
-                super.handleMessage(msg);
-            }
-        };
 
         sensorTimerTask = new TimerTask() {
             @Override
             public void run() {
-                Message message = new Message();
-                message.what = 1;
-                handler.sendMessage(message);
+                lightSenserValue = sensors.lightSensor.GetValue();
+                distanceSenserValue = sensors.distanceSensor.GetValue();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Light.setText("Light:" + lightSenserValue);
+                        Distance.setText("Distance:" + distanceSenserValue);
+                    }
+                });
+                if (MQTTShadowClient != null) {
+                    final PhoneJSON phoneJSON = MQTTShadowClient.getPhoneJSON();
+                    if (phoneJSON != null) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                MQTTShadowClient.phoneMQTT.setLight(lightSenserValue);
+                                if (MQTTShadowClient.phoneMQTT.getBeepDesired() == true)
+                                    BeepAndVibrate();
+                                if (phoneJSON.state.reported.beep)
+                                    ((TextView) findViewById(R.id.MQTTBeepStatus)).setText("Beep:T");
+                                else
+                                    ((TextView) findViewById(R.id.MQTTBeepStatus)).setText("Beep:F");
+
+                                if (phoneJSON.state.reported.flashLight)
+                                    ((TextView) findViewById(R.id.MQTTFlashStatus)).setText("Flash:T");
+                                else
+                                    ((TextView) findViewById(R.id.MQTTFlashStatus)).setText("Flash:F");
+
+                                ((TextView) findViewById(R.id.MQTTDistanceStatus)).setText("Distance:" + phoneJSON.state.reported.distance);
+                                ((TextView) findViewById(R.id.MQTTLightStatus)).setText("Light:" + phoneJSON.state.reported.light);
+                            }
+                        });
+                    }
+                }
+                if (WebSocketShadowClient != null) {
+                    WebSocketShadowClient.UpdateShadow_Start("distance", Double.toString(distanceSenserValue), new UpdateShadowCallback() {
+                        @Override
+                        public void call(final String key, final String value, final String result) {
+
+                        }
+                    });
+
+                    WebSocketShadowClient.GetShadow_Start(new GetShadowCallback() {
+                        @Override
+                        public void call(final String value) {
+                            Gson gson = new Gson();
+                            final PhoneJSON phoneJSON = gson.fromJson(value, PhoneJSON.class);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (phoneJSON.state.desired.flashLight == true)
+                                        flashLight.SetStatus(FlashLight.Status.ON, WebSocketShadowClient);
+                                    else
+                                        flashLight.SetStatus(FlashLight.Status.OFF, WebSocketShadowClient);
+
+                                    ((TextView) findViewById(R.id.WebSocketLightStatus)).setText("Light:" + phoneJSON.state.reported.light);
+                                    if (phoneJSON.state.reported.beep == true)
+                                        ((TextView) findViewById(R.id.WebSocketBeepStatus)).setText("Beep:T");
+                                    else
+                                        ((TextView) findViewById(R.id.WebSocketBeepStatus)).setText("Beep:F");
+
+                                    ((TextView) findViewById(R.id.WebSocketDistanceStatus)).setText("Distance:" + phoneJSON.state.reported.distance);
+
+                                    if (phoneJSON.state.reported.flashLight == true)
+                                        ((TextView) findViewById(R.id.WebSocketFlashStatus)).setText("Flash:T");
+                                    else
+                                        ((TextView) findViewById(R.id.WebSocketFlashStatus)).setText("Flash:F");
+                                }
+                            });
+                        }
+                    });
+                }
             }
         };
-        sensorTimer.schedule(sensorTimerTask, 1, 1);
 
+        sensorTimer.schedule(sensorTimerTask, 500, 500);
         flashLight = new FlashLight();
     }
 
@@ -164,17 +144,121 @@ public class MainActivity extends AppCompatActivity {
         if (v.getId() == R.id.LightButtom) {
             switch (flashLight.GetStatus()) {
                 case ON:
-                    flashLight.SetStatus(FlashLight.Status.OFF);
+                    WebSocketShadowClient.UpdateShadow_Start("flashLight", Boolean.toString(false), new UpdateShadowCallback() {
+                        @Override
+                        public void call(final String key, final String value, final String result) {
+
+                        }
+                    }, "desired");
                     break;
                 case OFF:
-                    flashLight.SetStatus(FlashLight.Status.ON);
+                    WebSocketShadowClient.UpdateShadow_Start("flashLight", Boolean.toString(true), new UpdateShadowCallback() {
+                        @Override
+                        public void call(final String key, final String value, final String result) {
+
+                        }
+                    }, "desired");
                     break;
             }
-        }
-        if (v.getId() == R.id.BeepButtom) {
+        } else if (v.getId() == R.id.BeepButtom) {
             BeepAndVibrate();
+        } else if (v.getId() == R.id.MQTTConnect) {
+            if (MQTTClient.GetStatus() != IotMqttClientStatus.Connected) {
+                if (MQTTShadowClient == null)
+                    MQTTShadowClient = new IOTData_MQTT(getApplicationContext());
+                MQTTClient.Connect(new ConnectCallBack() {
+                    @Override
+                    public void call(IotMqttClientStatus status) {
+                        if (status == IotMqttClientStatus.Connected) {
+                            if (MQTTClient.GetSubScribeStatus())
+                                return;
+                            MQTTClient.SubScribe("TEST", new SubScribeCallback() {
+                                @Override
+                                public void call(String Topic, final String Message, byte[] bytes) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            ((EditText) findViewById(R.id.MQTTMsg)).setText(Message);
+                                        }
+                                    });
+                                }
+                            });
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ((TextView) findViewById(R.id.MQTTStatus)).setText("MQTT:Connected");
+                                    ((Button) findViewById(R.id.MQTTConnect)).setText("MQTT Disconnect");
+                                    ((Button) findViewById(R.id.MQTTTestMsg)).setEnabled(true);
+                                }
+                            });
+                        }
+                    }
+                });
+            } else {
+                MQTTClient.Disconnect();
+                MQTTShadowClient.finalize();
+                MQTTShadowClient = null;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ((TextView) findViewById(R.id.MQTTStatus)).setText("MQTT:Disconnected");
+                        ((Button) findViewById(R.id.MQTTConnect)).setText("MQTT Connect");
+                        ((Button) findViewById(R.id.MQTTTestMsg)).setEnabled(false);
+                    }
+                });
+            }
+        } else if (v.getId() == R.id.WebSocketConnect) {
+            if (WebSocketClient.GetStatus() != IotMqttClientStatus.Connected) {
+                if (WebSocketShadowClient == null)
+                    WebSocketShadowClient = new IOTData_WebSocket(getApplicationContext());
+                WebSocketClient.Connect(new ConnectCallBack() {
+                    @Override
+                    public void call(IotMqttClientStatus status) {
+                        if (status == IotMqttClientStatus.Connected) {
+                            if (WebSocketClient.GetSubScribeStatus())
+                                return;
+                            WebSocketClient.SubScribe("TEST", new SubScribeCallback() {
+                                @Override
+                                public void call(String Topic, final String Message, byte[] bytes) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            ((EditText) findViewById(R.id.WebSocketMsg)).setText(Message);
+                                        }
+                                    });
+                                }
+                            });
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ((TextView) findViewById(R.id.WebSocketStatus)).setText("WebSocket:Connected");
+                                    ((Button) findViewById(R.id.WebSocketConnect)).setText("WebSocket Disconnect");
+                                    ((Button) findViewById(R.id.WebSocketTestMsg)).setEnabled(true);
+                                }
+                            });
+                        }
+                    }
+                });
+            } else {
+                WebSocketClient.Disconnect();
+                WebSocketShadowClient.finalize();
+                WebSocketShadowClient = null;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ((TextView) findViewById(R.id.WebSocketStatus)).setText("WebSocket:Disconnected");
+                        ((Button) findViewById(R.id.WebSocketConnect)).setText("WebSocket Connect");
+                        ((Button) findViewById(R.id.WebSocketTestMsg)).setEnabled(false);
+                    }
+                });
+            }
+        } else if (v.getId() == R.id.MQTTTestMsg) {
+            MQTTClient.Publish("TEST", "Message form MQTT Client. " + (new SimpleDateFormat("HH:mm:ss")).format(new Date()));
+        } else if (v.getId() == R.id.WebSocketTestMsg) {
+            WebSocketClient.Publish("TEST", "Message form WebSocket Client. " + (new SimpleDateFormat("HH:mm:ss")).format(new Date()));
         }
     }
+
 
     private void BeepAndVibrate() {
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -183,5 +267,20 @@ public class MainActivity extends AppCompatActivity {
 
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         vibrator.vibrate(1000);
+
+        if (MQTTShadowClient != null) {
+            MQTTShadowClient.phoneMQTT.setBeepReport(true);
+            final Timer timer = new Timer();
+
+            final TimerTask timerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    MQTTShadowClient.phoneMQTT.setBeepReport(false);
+                    timer.cancel();
+                }
+            };
+            timer.schedule(timerTask, 1000);
+        }
     }
 }
+

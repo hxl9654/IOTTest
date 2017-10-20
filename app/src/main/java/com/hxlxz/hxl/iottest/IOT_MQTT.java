@@ -16,7 +16,10 @@ import java.util.UUID;
 class IOT_MQTT {
     private KeyStore clientKetStore;
     private AWSIotMqttManager mqttManager;
-    private AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus status;
+    private IotMqttClientStatus status;
+    private boolean SubScribeStatus = false;
+
+    public enum IotMqttClientStatus {Connecting, Connected, ConnectionLost, Reconnecting}
 
     IOT_MQTT(Context context) {
         String clientid = UUID.randomUUID().toString();
@@ -43,8 +46,21 @@ class IOT_MQTT {
                 @Override
                 public void onStatusChanged(AWSIotMqttClientStatus awsIotMqttClientStatus, Throwable throwable) {
                     Log.d("IOTMQTT", "Status = " + String.valueOf(awsIotMqttClientStatus));
-                    status = awsIotMqttClientStatus;
-                    callback.call(awsIotMqttClientStatus);
+                    switch (awsIotMqttClientStatus) {
+                        case Connecting:
+                            status = IotMqttClientStatus.Connecting;
+                            break;
+                        case Connected:
+                            status = IotMqttClientStatus.Connected;
+                            break;
+                        case ConnectionLost:
+                            status = IotMqttClientStatus.ConnectionLost;
+                            break;
+                        case Reconnecting:
+                            status = IotMqttClientStatus.Reconnecting;
+                            break;
+                    }
+                    callback.call(status);
                 }
             });
         } catch (final Exception e) {
@@ -54,8 +70,9 @@ class IOT_MQTT {
 
     public boolean Disconnect() {
         try {
-            if (status != AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.ConnectionLost)
+            if (status != IotMqttClientStatus.ConnectionLost)
                 mqttManager.disconnect();
+            SubScribeStatus = false;
             return true;
         } catch (Exception e) {
             Log.e("IOTMQTT", "Disconnect error.", e);
@@ -84,16 +101,25 @@ class IOT_MQTT {
                     callback.call(topic, new String(bytes), bytes);
                 }
             });
+            SubScribeStatus = true;
             return true;
         } catch (Exception e) {
             Log.e("IOTMQTT", "SubScribe error.", e);
             return false;
         }
     }
+
+    public IotMqttClientStatus GetStatus() {
+        return status;
+    }
+
+    public boolean GetSubScribeStatus() {
+        return SubScribeStatus;
+    }
 }
 
 interface ConnectCallBack {
-    public void call(AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus status);
+    public void call(IOT_MQTT.IotMqttClientStatus status);
 }
 
 interface SubScribeCallback {

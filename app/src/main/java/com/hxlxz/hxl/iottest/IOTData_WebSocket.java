@@ -12,6 +12,7 @@ import com.amazonaws.services.iotdata.model.GetThingShadowRequest;
 import com.amazonaws.services.iotdata.model.GetThingShadowResult;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowRequest;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowResult;
+
 import java.nio.ByteBuffer;
 
 
@@ -20,9 +21,14 @@ class IOTData_WebSocket {
     CognitoCachingCredentialsProvider credentialsProvider;
 
     @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        iotDataClient.shutdown();
+    protected void finalize() {
+        try {
+            super.finalize();
+
+            iotDataClient.shutdown();
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
     }
 
     IOTData_WebSocket(Context context) {
@@ -33,31 +39,34 @@ class IOTData_WebSocket {
         );
         iotDataClient = new AWSIotDataClient(credentialsProvider);
         iotDataClient.setEndpoint("a3bwasu2cbypll.iot.ap-northeast-1.amazonaws.com");
+        Log.i("IOTDataWebSocket", "Created");
     }
 
-    public void GetShadow_Start(String key, final GetShadowCallback callback) {
-        GetShadowTask getShadowTask = new GetShadowTask(callback, key);
+    public void GetShadow_Start(final GetShadowCallback callback) {
+        GetShadowTask getShadowTask = new GetShadowTask(callback);
         getShadowTask.execute();
     }
 
     public void UpdateShadow_Start(String key, String value, final UpdateShadowCallback callback) {
-        UpdateShadowTask updateShadowTask = new UpdateShadowTask(callback, key, value);
+        UpdateShadow_Start(key, value, callback, "reported");
+    }
+
+    public void UpdateShadow_Start(String key, String value, final UpdateShadowCallback callback, String reported_Or_desired) {
+        UpdateShadowTask updateShadowTask = new UpdateShadowTask(callback, key, value, reported_Or_desired);
         updateShadowTask.execute();
     }
 
     private class GetShadowTask extends AsyncTask<Void, Void, String> {
         GetShadowCallback callBack;
-        String key;
 
-        GetShadowTask(GetShadowCallback mCallBack, String mKey) {
+        GetShadowTask(GetShadowCallback mCallBack) {
             callBack = mCallBack;
-            key = mKey;
         }
 
         @Override
         protected String doInBackground(Void... params) {
             try {
-                GetThingShadowRequest getThingShadowRequest = new GetThingShadowRequest().withThingName("phoneMQTT");
+                GetThingShadowRequest getThingShadowRequest = new GetThingShadowRequest().withThingName("phone");
                 GetThingShadowResult getThingShadowResult = iotDataClient.getThingShadow(getThingShadowRequest);
                 byte[] bytes = new byte[getThingShadowResult.getPayload().remaining()];
                 getThingShadowResult.getPayload().get(bytes);
@@ -72,8 +81,8 @@ class IOTData_WebSocket {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            Log.i("IOTDataWebSocket", "getshadow:" + key + ":" + result);
-            callBack.call(key, result);
+            Log.i("IOTDataWebSocket", "getshadow:" + result);
+            callBack.call(result);
         }
     }
 
@@ -82,18 +91,19 @@ class IOTData_WebSocket {
         String key, value;
         String state;
 
-        UpdateShadowTask(UpdateShadowCallback mCallBack, String mKey, String mValue) {
+        UpdateShadowTask(UpdateShadowCallback mCallBack, String mKey, String mValue, String reported_Or_desired) {
             callBack = mCallBack;
             key = mKey;
             value = mValue;
-            state = String.format("{\"state\":{\"desired\":{\"%s\":%s}}}", key, value);
+            state = String.format("{\"state\":{\"%s\":{\"%s\":%s}}}", reported_Or_desired, mKey, mValue);
+            Log.i("IOTDataWebSocket", "updateshadow started:" + mKey + ":" + mValue + "   " + state);
         }
 
         @Override
         protected String doInBackground(Void... params) {
             try {
                 UpdateThingShadowRequest updateThingShadowRequest = new UpdateThingShadowRequest();
-                updateThingShadowRequest.setThingName("phoneMQTT");
+                updateThingShadowRequest.setThingName("phone");
 
                 ByteBuffer payloadBuffer = ByteBuffer.wrap(state.getBytes());
                 updateThingShadowRequest.setPayload(payloadBuffer);
@@ -113,14 +123,14 @@ class IOTData_WebSocket {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            Log.i("IOTDataWebSocket", "updateshadow:" + key + ":" + value + "  " + result);
+            Log.i("IOTDataWebSocket", "updateshadow finished:" + key + ":" + value + "  " + result);
             callBack.call(key, value, result);
         }
     }
 }
 
 interface GetShadowCallback {
-    public void call(String key, String value);
+    public void call(String value);
 }
 
 interface UpdateShadowCallback {

@@ -3,7 +3,6 @@ package com.hxlxz.hxl.iottest;
 import android.content.Context;
 import android.util.Log;
 
-import com.amazonaws.auth.AWSSessionCredentials;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager;
@@ -13,15 +12,22 @@ import com.amazonaws.regions.Regions;
 
 import java.util.UUID;
 
+import com.hxlxz.hxl.iottest.IOT_MQTT.IotMqttClientStatus;
+
 
 class IOT_WebSockets {
     private AWSIotMqttManager mqttManager;
-    private AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus status;
+    private IotMqttClientStatus status;
     CognitoCachingCredentialsProvider credentialsProvider;
+    private boolean SubScribeStatus = false;
 
     @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
+    protected void finalize() {
+        try {
+            super.finalize();
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
         mqttManager.disconnect();
     }
 
@@ -48,8 +54,21 @@ class IOT_WebSockets {
                 @Override
                 public void onStatusChanged(AWSIotMqttClientStatus awsIotMqttClientStatus, Throwable throwable) {
                     Log.d("IOTWebSockets", "Status = " + String.valueOf(awsIotMqttClientStatus));
-                    status = awsIotMqttClientStatus;
-                    callback.call(awsIotMqttClientStatus);
+                    switch (awsIotMqttClientStatus) {
+                        case Connecting:
+                            status = IotMqttClientStatus.Connecting;
+                            break;
+                        case Connected:
+                            status = IotMqttClientStatus.Connected;
+                            break;
+                        case ConnectionLost:
+                            status = IotMqttClientStatus.ConnectionLost;
+                            break;
+                        case Reconnecting:
+                            status = IotMqttClientStatus.Reconnecting;
+                            break;
+                    }
+                    callback.call(status);
                 }
             });
         } catch (final Exception e) {
@@ -59,8 +78,9 @@ class IOT_WebSockets {
 
     public boolean Disconnect() {
         try {
-            if (status != AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.ConnectionLost)
+            if (status != IotMqttClientStatus.ConnectionLost)
                 mqttManager.disconnect();
+            SubScribeStatus = false;
             return true;
         } catch (Exception e) {
             Log.e("IOTWebSockets", "Disconnect error.", e);
@@ -89,10 +109,19 @@ class IOT_WebSockets {
                     callback.call(topic, new String(bytes), bytes);
                 }
             });
+            SubScribeStatus = true;
             return true;
         } catch (Exception e) {
             Log.e("IOTWebSockets", "SubScribe error.", e);
             return false;
         }
+    }
+
+    public IotMqttClientStatus GetStatus() {
+        return status;
+    }
+
+    public boolean GetSubScribeStatus() {
+        return SubScribeStatus;
     }
 }
