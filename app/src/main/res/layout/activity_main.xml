@@ -36,19 +36,53 @@
             android:textAlignment="center"
             android:textColor="@android:color/black" />
 
-        <Button
-            android:id="@+id/LightButtom"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="onClickListener"
-            android:text="Light" />
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/BeepButtom"
+            <Button
+                android:id="@+id/BeepONButtom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:enabled="false"
+                android:onClick="onClickListener"
+                android:text="Beep ON" />
+
+            <Button
+                android:id="@+id/BeepOFFButtom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:enabled="false"
+                android:onClick="onClickListener"
+                android:text="Beep OFF" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="onClickListener"
-            android:text="Beep" />
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/LightONButtom"
+                android:enabled="false"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="onClickListener"
+                android:text="Light ON" />
+
+            <Button
+                android:id="@+id/LightOFFButtom"
+                android:enabled="false"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="onClickListener"
+                android:text="Light OFF" />
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -62,10 +96,10 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/MQTTStatus"
+            android:id="@+id/MQTT1Status"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="MQTT:Disconnected"
+            android:text="MQTT1:Disconnected"
             android:textAlignment="center"
             android:textColor="@android:color/black" />
 
@@ -75,52 +109,48 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/MQTTFlashStatus"
+                android:id="@+id/MQTT1FlashStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Flash:"
                 android:textAlignment="center"
                 android:textColor="@android:color/black" />
 
             <TextView
-                android:id="@+id/MQTTLightStatus"
+                android:id="@+id/MQTT1BeepStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Light:"
                 android:textAlignment="center"
                 android:textColor="@android:color/black" />
 
             <TextView
-                android:id="@+id/MQTTBeepStatus"
+                android:id="@+id/MQTT1LightStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Beep:"
                 android:textAlignment="center"
                 android:textColor="@android:color/black" />
 
             <TextView
-                android:id="@+id/MQTTDistanceStatus"
+                android:id="@+id/MQTT1DistanceStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Distance:"
                 android:textAlignment="center"
                 android:textColor="@android:color/black" />
 
         </LinearLayout>
 
         <Button
-            android:id="@+id/MQTTConnect"
+            android:id="@+id/MQTT1Connect"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="onClickListener"
-            android:text="MQTT Connect" />
+            android:text="MQTT1 Connect" />
 
         <Button
-            android:id="@+id/MQTTTestMsg"
+            android:id="@+id/MQTT1TestMsg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:enabled="false"
@@ -128,7 +158,7 @@
             android:text="Send Test Msg" />
 
         <EditText
-            android:id="@+id/MQTTMsg"
+            android:id="@+id/MQTT1Msg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
@@ -147,10 +177,10 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/WebSocketStatus"
+            android:id="@+id/MQTT2Status"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="WebSocket:Disconnected"
+            android:text="MQTT2:Disconnected"
             android:textAlignment="center"
             android:textColor="@android:color/black" />
 
@@ -160,52 +190,49 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/WebSocketFlashStatus"
+                android:id="@+id/MQTT2FlashStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Flash:"
                 android:textAlignment="center"
                 android:textColor="@android:color/black" />
 
             <TextView
-                android:id="@+id/WebSocketLightStatus"
+                android:id="@+id/MQTT2BeepStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Light:"
                 android:textAlignment="center"
                 android:textColor="@android:color/black" />
 
             <TextView
-                android:id="@+id/WebSocketBeepStatus"
+                android:id="@+id/MQTT2LightStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Beep:"
                 android:textAlignment="center"
                 android:textColor="@android:color/black" />
 
+
             <TextView
-                android:id="@+id/WebSocketDistanceStatus"
+                android:id="@+id/MQTT2DistanceStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Distance:"
                 android:textAlignment="center"
                 android:textColor="@android:color/black" />
 
         </LinearLayout>
 
         <Button
-            android:id="@+id/WebSocketConnect"
+            android:id="@+id/MQTT2Connect"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="onClickListener"
-            android:text="WebSocket Connect" />
+            android:text="MQTT2 Connect" />
 
         <Button
-            android:id="@+id/WebSocketTestMsg"
+            android:id="@+id/MQTT2TestMsg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:enabled="false"
@@ -213,7 +240,7 @@
             android:text="Send Test Msg" />
 
         <EditText
-            android:id="@+id/WebSocketMsg"
+            android:id="@+id/MQTT2Msg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"

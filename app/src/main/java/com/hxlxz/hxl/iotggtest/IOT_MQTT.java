@@ -1,59 +1,51 @@
-package com.hxlxz.hxl.iottest;
+package com.hxlxz.hxl.iotggtest;
 
 import android.content.Context;
 import android.util.Log;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttNewMessageCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos;
-import com.amazonaws.regions.Regions;
 
+import java.security.KeyStore;
 import java.util.UUID;
 
-import com.hxlxz.hxl.iottest.IOT_MQTT.IotMqttClientStatus;
 
-
-class IOT_WebSockets {
+class IOT_MQTT {
+    private KeyStore clientKetStore;
     private AWSIotMqttManager mqttManager;
     private IotMqttClientStatus status;
-    CognitoCachingCredentialsProvider credentialsProvider;
     private boolean SubScribeStatus = false;
 
-    @Override
-    protected void finalize() {
-        try {
-            super.finalize();
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-        }
-        mqttManager.disconnect();
-    }
+    public enum IotMqttClientStatus {Connecting, Connected, ConnectionLost, Reconnecting}
 
-    IOT_WebSockets(Context context) {
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                context,
-                "ap-northeast-1:de02d42c-7126-4d85-a7f8-611546099b6a", // 身份池 ID
-                Regions.AP_NORTHEAST_1 // 区域
-        );
+    IOT_MQTT(Context context) {
         String clientid = UUID.randomUUID().toString();
-        mqttManager = new AWSIotMqttManager(clientid, "a3bwasu2cbypll.iot.ap-northeast-1.amazonaws.com");
+        mqttManager = new AWSIotMqttManager(clientid, context.getResources().getString(R.string.EndPoint));
         mqttManager.setKeepAlive(1000);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                credentialsProvider.getCredentials();
-            }
-        }).start();
+
+        String keystorePath = context.getFilesDir().getPath();
+        try {
+            if (AWSIotKeystoreHelper.isKeystorePresent(keystorePath, "CertPhone")) {
+                if (AWSIotKeystoreHelper.keystoreContainsAlias("certphone", keystorePath, "CertPhone", "CertPhonePassword")) {
+                    Log.i("IOTMQTT", "Certificate \"certphone\" found in keystore - using for MQTT.");
+                    clientKetStore = AWSIotKeystoreHelper.getIotKeystore("certphone", keystorePath, "CertPhone", "CertPhonePassword");
+                } else
+                    Log.e("IOTMQTT", "Key/cert \"certphone\" not found in keystore.");
+            } else Log.e("IOTMQTT", "Keystore " + keystorePath + "/\"CertPhone\" not found.");
+        } catch (Exception e) {
+            Log.e("IOTMQTT", "An error occurred retrieving cert/key from keystore.", e);
+        }
     }
 
-    public void Connect(final ConnectCallBack callback) {
+    void Connect(final ConnectCallBack callback) {
         try {
-            mqttManager.connect(credentialsProvider, new AWSIotMqttClientStatusCallback() {
+            mqttManager.connect(clientKetStore, new AWSIotMqttClientStatusCallback() {
                 @Override
                 public void onStatusChanged(AWSIotMqttClientStatus awsIotMqttClientStatus, Throwable throwable) {
-                    Log.d("IOTWebSockets", "Status = " + String.valueOf(awsIotMqttClientStatus));
+                    Log.d("IOTMQTT", "Status = " + String.valueOf(awsIotMqttClientStatus));
                     switch (awsIotMqttClientStatus) {
                         case Connecting:
                             status = IotMqttClientStatus.Connecting;
@@ -72,56 +64,58 @@ class IOT_WebSockets {
                 }
             });
         } catch (final Exception e) {
-            Log.e("IOTWebSockets", "Connection error.", e);
+            Log.e("IOTMQTT", "Connection error.", e);
         }
     }
 
-    public boolean Disconnect() {
+    void Disconnect() {
         try {
             if (status != IotMqttClientStatus.ConnectionLost)
                 mqttManager.disconnect();
             SubScribeStatus = false;
-            return true;
         } catch (Exception e) {
-            Log.e("IOTWebSockets", "Disconnect error.", e);
-            return false;
+            Log.e("IOTMQTT", "Disconnect error.", e);
         }
     }
 
-    public boolean Publish(String Topic, String Message) {
+    void Publish(String Topic, String Message) {
         try {
             mqttManager.publishString(Message, Topic, AWSIotMqttQos.QOS0);
-            return true;
         } catch (Exception e) {
-            Log.e("IOTWebSockets", "Publish error.", e);
-            return false;
+            Log.e("IOTMQTT", "Publish error.", e);
         }
     }
 
-    public boolean SubScribe(String Topic, final SubScribeCallback callback) {
+    void SubScribe(String Topic, final SubScribeCallback callback) {
         try {
             mqttManager.subscribeToTopic(Topic, AWSIotMqttQos.QOS1, new AWSIotMqttNewMessageCallback() {
                 @Override
                 public void onMessageArrived(String topic, byte[] bytes) {
-                    Log.d("IOTWebSockets", "Message arrived:");
-                    Log.d("IOTWebSockets", "   Topic: " + topic);
-                    Log.d("IOTWebSockets", " Message: " + new String(bytes));
+                    Log.d("IOTMQTT", "Message arrived:");
+                    Log.d("IOTMQTT", "   Topic: " + topic);
+                    Log.d("IOTMQTT", " Message: " + new String(bytes));
                     callback.call(topic, new String(bytes), bytes);
                 }
             });
             SubScribeStatus = true;
-            return true;
         } catch (Exception e) {
-            Log.e("IOTWebSockets", "SubScribe error.", e);
-            return false;
+            Log.e("IOTMQTT", "SubScribe error.", e);
         }
     }
 
-    public IotMqttClientStatus GetStatus() {
+    IotMqttClientStatus GetStatus() {
         return status;
     }
 
-    public boolean GetSubScribeStatus() {
+    boolean GetSubScribeStatus() {
         return SubScribeStatus;
     }
+}
+
+interface ConnectCallBack {
+    void call(IOT_MQTT.IotMqttClientStatus status);
+}
+
+interface SubScribeCallback {
+    void call(String Topic, String Message, byte[] bytes);
 }

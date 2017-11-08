@@ -1,4 +1,4 @@
-package com.hxlxz.hxl.iottest;
+package com.hxlxz.hxl.iotggtest;
 
 import android.content.Context;
 import android.hardware.Sensor;
@@ -10,18 +10,17 @@ class Sensors {
     LightSensor lightSensor;
     DistanceSensor distanceSensor;
 
-    public class LightSensor {
+    private class LightSensor {
         private Sensor lightSensor;
-        private float value;
 
-        LightSensor(Context context) {
+        LightSensor(Context context, final SensorCallback callback) {
             SensorManager sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
             lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
             SensorEventListener sensorEventListener = new SensorEventListener() {
                 @Override
                 public void onSensorChanged(SensorEvent event) {
-                    value = event.values[0];
+                    callback.call(event.values[0]);
                 }
 
                 @Override
@@ -31,25 +30,19 @@ class Sensors {
             };
             sensorManager.registerListener(sensorEventListener, lightSensor, SensorManager.SENSOR_DELAY_GAME);
         }
-
-        public float GetValue() {
-            return value;
-        }
-
     }
 
-    public class DistanceSensor {
+    private class DistanceSensor {
         private Sensor distanceSensor;
-        private float value;
 
-        DistanceSensor(Context context) {
+        DistanceSensor(Context context, final SensorCallback callback) {
             SensorManager sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
             distanceSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
 
             SensorEventListener sensorEventListener = new SensorEventListener() {
                 @Override
                 public void onSensorChanged(SensorEvent event) {
-                    value = event.values[0];
+                    callback.call(event.values[0]);
                 }
 
                 @Override
@@ -59,14 +52,14 @@ class Sensors {
             };
             sensorManager.registerListener(sensorEventListener, distanceSensor, SensorManager.SENSOR_DELAY_GAME);
         }
-
-        public float GetValue() {
-            return value;
-        }
     }
 
-    Sensors(Context context) {
-        lightSensor = new LightSensor(context);
-        distanceSensor = new DistanceSensor(context);
+    Sensors(Context context, SensorCallback LightCallBack, SensorCallback DistanceCallBack) {
+        lightSensor = new LightSensor(context, LightCallBack);
+        distanceSensor = new DistanceSensor(context, DistanceCallBack);
     }
+}
+
+interface SensorCallback {
+    void call(float value);
 }

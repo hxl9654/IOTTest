@@ -1,4 +1,4 @@
-package com.hxlxz.hxl.iottest;
+package com.hxlxz.hxl.iotggtest;
 
 import org.junit.Test;
 

@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">IOTTest</string>
+    <string name="app_name">IOTGGTest</string>
+    <string name="EndPoint">a3bwasu2cbypll.iot.us-west-2.amazonaws.com</string>
 </resources>
