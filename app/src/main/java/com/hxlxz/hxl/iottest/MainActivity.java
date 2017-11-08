@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        sensorTimer.schedule(sensorTimerTask, 500, 500);
+        sensorTimer.schedule(sensorTimerTask, 1000, 1000);
         flashLight = new FlashLight();
     }
 
